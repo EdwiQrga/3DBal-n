@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Detector de Balón de Futbol</title>
 
-  <!-- TensorFlow y COCO-SSD -->
+  <!-- TensorFlow + modelo -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 
@@ -13,38 +13,44 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background-color: #f0f0f0;
+      background-color: #e6f2ff;
       padding: 20px;
     }
+
     h1 {
-      color: #d40000;
+      color: #003366;
     }
+
     video, canvas {
-      border: 3px solid #d40000;
+      border: 3px solid #003366;
       border-radius: 10px;
       width: 100%;
       max-width: 640px;
     }
+
     #canvas {
       position: absolute;
       top: 0;
       left: 0;
       pointer-events: none;
     }
+
     #cameraContainer {
       position: relative;
       display: inline-block;
     }
+
     #sketchfabContainer {
       display: none;
       margin-top: 20px;
       width: 100%;
       max-width: 640px;
       height: 480px;
-      border: 3px solid #d40000;
+      border: 3px solid #003366;
       border-radius: 10px;
       overflow: hidden;
     }
+
     #status {
       margin-top: 15px;
       font-weight: bold;
@@ -53,34 +59,39 @@
       border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+
     .detected {
-      background: #4CAF50 !important;
+      background: #00cc44 !important;
       color: white;
       animation: pulse 1.5s infinite;
     }
+
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
+
     button {
       margin: 10px;
       padding: 10px 20px;
-      background: #d40000;
+      background: #003366;
       color: white;
       border: none;
       border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
     }
+
     button:hover {
-      background: #b30000;
+      background: #0055aa;
     }
   </style>
 </head>
 <body>
   <h1>Balón de Futbol</h1>
   <p>Apunta tu cámara a un balón para mostrar el modelo 3D</p>
+
   <button id="startBtn">Iniciar Cámara</button>
   <button id="toggleCam" style="display: none;">Cambiar Cámara</button>
 
@@ -96,8 +107,6 @@
       title="Balón Adidas"
       frameborder="0"
       allowfullscreen
-      mozallowfullscreen="true"
-      webkitallowfullscreen="true"
       allow="autoplay; fullscreen; xr-spatial-tracking"
       xr-spatial-tracking
       execution-while-out-of-viewport
@@ -175,7 +184,7 @@
         predictions.forEach(pred => {
           if (pred.class === "sports ball" && pred.score > 0.6) {
             found = true;
-            drawBox(pred, '#FF0000', 'Balón');
+            drawBox(pred, '#00cc44', 'Balón');
           }
         });
 
@@ -209,7 +218,7 @@
       sketchfabContainer.style.display = 'block';
       cameraContainer.style.display = 'none';
       const iframe = document.getElementById('sketchfabModel');
-      iframe.src = iframe.src; // recarga el iframe para que funcione bien
+      iframe.src = iframe.src;
     }
 
     function hideModel() {
@@ -232,3 +241,5 @@
   </script>
 </body>
 </html>
+
+
