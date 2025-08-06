@@ -1,254 +1,234 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detector de un Balón de Futbol en Modelo 3D</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #d40000;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        #cameraContainer {
-            position: relative;
-            margin: 20px auto;
-            width: 100%;
-            max-width: 640px;
-        }
-        #video {
-            width: 100%;
-            border: 3px solid #d40000;
-            border-radius: 8px;
-            display: block;
-        }
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        #sketchfabContainer {
-            display: none;
-            width: 100%;
-            height: 480px;
-            margin: 20px auto;
-            border: 3px solid #d40000;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        #status {
-            padding: 15px;
-            margin: 15px 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .detected {
-            background: #4CAF50 !important;
-            color: white;
-            animation: pulse 1.5s infinite;
-        }
-        button {
-            background: #d40000;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        }
-        button:hover {
-            background: #b30000;
-            transform: translateY(-2px);
-        }
-        #toggleCam {
-            background: #333;
-            display: none;
-        }
-        .loading {
-            color: #d40000;
-            font-weight: bold;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detector de Balón de Futbol</title>
+
+  <!-- TensorFlow y COCO-SSD -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+    h1 {
+      color: #d40000;
+    }
+    video, canvas {
+      border: 3px solid #d40000;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 640px;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    #cameraContainer {
+      position: relative;
+      display: inline-block;
+    }
+    #sketchfabContainer {
+      display: none;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 640px;
+      height: 480px;
+      border: 3px solid #d40000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .detected {
+      background: #4CAF50 !important;
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #d40000;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #b30000;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Balón de Futbol</h1>
-        <p>Apunta con la cámara trasera a un Balón de futbol para verlo en el modelo 3D</p>
-        
-        <button id="startBtn">Iniciar Cámara Trasera</button>
-        <button id="toggleCam">Cambiar a Cámara Frontal</button>
-        <div id="status" class="loading">Presiona "Iniciar Cámara Trasera" para comenzar</div>
-        
-        <div id="cameraContainer">
-            <video id="video" autoplay playsinline muted></video>
-            <canvas id="canvas"></canvas>
-        </div>
-        
-        <div id="sketchfabContainer">
-            <iframe id="sketchfabModel" title="Balón Adidas" frameborder="0" allowfullscreen mozallowfullscreen="true" 
-            webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking 
-            execution-while-out-of-viewport execution-while-not-rendered web-share 
-            src="https://sketchfab.com/models/7929bd7771d8494eaf0eb31404e24bf6/embed" style="width:100%;height:100%;"></iframe>
-        </div>
-    </div>
+  <h1>Balón de Futbol</h1>
+  <p>Apunta tu cámara a un balón para mostrar el modelo 3D</p>
+  <button id="startBtn">Iniciar Cámara</button>
+  <button id="toggleCam" style="display: none;">Cambiar Cámara</button>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const statusDiv = document.getElementById('status');
-        const startBtn = document.getElementById('startBtn');
-        const toggleBtn = document.getElementById('toggleCam');
-        const cameraContainer = document.getElementById('cameraContainer');
-        const sketchfabContainer = document.getElementById('sketchfabContainer');
+  <div id="status" class="loading">Presiona "Iniciar Cámara"</div>
 
-        let currentStream = null;
-        let isUsingFrontCamera = false;
-        let detectionInterval;
-        let isDetected = false;
+  <div id="cameraContainer">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
 
-        async function startCamera(front = false) {
-            stopCamera();
-            try {
-                statusDiv.textContent = "Activando cámara...";
-                statusDiv.className = "loading";
+  <div id="sketchfabContainer">
+    <iframe id="sketchfabModel"
+      title="Balón Adidas"
+      frameborder="0"
+      allowfullscreen
+      mozallowfullscreen="true"
+      webkitallowfullscreen="true"
+      allow="autoplay; fullscreen; xr-spatial-tracking"
+      xr-spatial-tracking
+      execution-while-out-of-viewport
+      execution-while-not-rendered
+      web-share
+      src="https://sketchfab.com/models/7929bd7771d8494eaf0eb31404e24bf6/embed"
+      style="width:100%; height:100%;">
+    </iframe>
+  </div>
 
-                const constraints = {
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: front ? "user" : { exact: "environment" }
-                    }
-                };
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const toggleBtn = document.getElementById('toggleCam');
+    const sketchfabContainer = document.getElementById('sketchfabContainer');
+    const cameraContainer = document.getElementById('cameraContainer');
 
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                currentStream = stream;
-                video.srcObject = stream;
-                isUsingFrontCamera = front;
-                toggleBtn.style.display = 'inline-block';
+    let currentStream = null;
+    let isFrontCamera = false;
+    let model = null;
+    let isDetected = false;
+    let detectionLoop = null;
 
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    initializeDetection();
-                };
-            } catch (error) {
-                console.error("Error al acceder a la cámara:", error);
-                statusDiv.textContent = "Error: " + error.message;
+    async function startCamera(front = false) {
+      stopCamera();
+      try {
+        const constraints = {
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: front ? 'user' : { exact: 'environment' }
+          }
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        video.srcObject = stream;
+        isFrontCamera = front;
+        toggleBtn.style.display = 'inline-block';
 
-                if (!front && error.message.includes('environment')) {
-                    statusDiv.textContent += ". Intentando con cámara frontal...";
-                    setTimeout(() => startCamera(true), 1000);
-                }
-            }
+        video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          startDetection();
+        };
+      } catch (err) {
+        console.error("Error al acceder a la cámara:", err);
+        statusDiv.textContent = "Error: " + err.message;
+        if (!front && err.message.includes("environment")) {
+          statusDiv.textContent += " — intentando cámara frontal...";
+          setTimeout(() => startCamera(true), 1000);
         }
+      }
+    }
 
-        async function initializeDetection() {
-            statusDiv.textContent = "Cargando modelo de IA...";
+    async function startDetection() {
+      if (!model) {
+        statusDiv.textContent = "Cargando modelo de IA...";
+        model = await cocoSsd.load();
+      }
+      statusDiv.textContent = "Apunta a un balón de futbol";
+      detectionLoop = setInterval(() => detect(model), 500);
+    }
 
-            try {
-                const model = await cocoSsd.load();
-                statusDiv.textContent = "Listo. Apunta a un balón de futbol";
-                statusDiv.className = "";
+    async function detect(model) {
+      try {
+        const predictions = await model.detect(video);
+        console.log("Predicciones:", predictions);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                detectionInterval = setInterval(() => detectBall(model), 300);
-            } catch (error) {
-                statusDiv.textContent = "Error cargando modelo: " + error.message;
-            }
+        let found = false;
+
+        predictions.forEach(pred => {
+          if (pred.class === "sports ball" && pred.score > 0.6) {
+            found = true;
+            drawBox(pred, '#FF0000', 'Balón');
+          }
+        });
+
+        if (found && !isDetected) {
+          isDetected = true;
+          statusDiv.textContent = "¡Balón detectado!";
+          statusDiv.className = "detected";
+          showModel();
+        } else if (!found && isDetected) {
+          isDetected = false;
+          statusDiv.textContent = "Buscando balón de futbol...";
+          statusDiv.className = "";
+          hideModel();
         }
+      } catch (err) {
+        console.error("Error de detección:", err);
+      }
+    }
 
-        async function detectBall(model) {
-            try {
-                const predictions = await model.detect(video);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function drawBox(pred, color, label) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(...pred.bbox);
 
-                let foundBall = false;
-                predictions.forEach(pred => {
-                    if (pred.class === 'sports ball' && pred.score > 0.6) {
-                        foundBall = true;
-                        drawDetectionBox(pred, '#FF0000', 'Balón de Futbol');
-                    }
-                });
+      ctx.fillStyle = color;
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(`${label} (${Math.round(pred.score * 100)}%)`, pred.bbox[0], pred.bbox[1] > 20 ? pred.bbox[1] - 5 : 20);
+    }
 
-                if (foundBall && !isDetected) {
-                    isDetected = true;
-                    statusDiv.textContent = "¡Balón detectado!";
-                    statusDiv.className = "detected";
-                    showSketchfabModel();
-                } else if (!foundBall && isDetected) {
-                    isDetected = false;
-                    statusDiv.textContent = "Buscando balones de futbol...";
-                    statusDiv.className = "";
-                    hideSketchfabModel();
-                }
-            } catch (error) {
-                console.log("Error en detección:", error);
-            }
-        }
+    function showModel() {
+      sketchfabContainer.style.display = 'block';
+      cameraContainer.style.display = 'none';
+      const iframe = document.getElementById('sketchfabModel');
+      iframe.src = iframe.src; // recarga el iframe para que funcione bien
+    }
 
-        function drawDetectionBox(prediction, color, label) {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 4;
-            ctx.strokeRect(...prediction.bbox);
+    function hideModel() {
+      sketchfabContainer.style.display = 'none';
+      cameraContainer.style.display = 'inline-block';
+    }
 
-            ctx.fillStyle = color;
-            ctx.font = 'bold 16px Arial';
-            ctx.fillText(
-                `${label} (${Math.round(prediction.score * 100)}%)`,
-                prediction.bbox[0],
-                prediction.bbox[1] > 10 ? prediction.bbox[1] - 5 : 15
-            );
-        }
+    function stopCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      if (detectionLoop) clearInterval(detectionLoop);
+      isDetected = false;
+      hideModel();
+    }
 
-        function showSketchfabModel() {
-            sketchfabContainer.style.display = 'block';
-            cameraContainer.style.display = 'none';
-
-            const iframe = document.getElementById('sketchfabModel');
-            iframe.src = iframe.src;
-        }
-
-        function hideSketchfabModel() {
-            sketchfabContainer.style.display = 'none';
-            cameraContainer.style.display = 'block';
-        }
-
-        function stopCamera() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-                if (detectionInterval) clearInterval(detectionInterval);
-            }
-            isDetected = false;
-            sketchfabContainer.style.display = 'none';
-            cameraContainer.style.display = 'block';
-        }
-
-        startBtn.addEventListener('click', () => startCamera(false));
-        toggleBtn.addEventListener('click', () => startCamera(!isUsingFrontCamera));
-        window.addEventListener('beforeunload', stopCamera);
-    </script>
+    startBtn.addEventListener('click', () => startCamera(false));
+    toggleBtn.addEventListener('click', () => startCamera(!isFrontCamera));
+    window.addEventListener('beforeunload', stopCamera);
+  </script>
 </body>
 </html>
